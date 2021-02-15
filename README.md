@@ -1,3 +1,3 @@
-ME 699 RMC
+# Robot Modeling & Control
 
-* course repo for Landon Clark, Haitou Guan, and Sumit Kamat
+**Website:** [click here](https://hpoonawala.github.io/rmc-s21/)
