@@ -165,7 +165,7 @@
 
   <link name="eef_right_link" />
   <joint name="eef_right" type="fixed">
-    <origin xyz="0 0 -1.25" rpy="0 0 0" />
+    <origin xyz="0 0 -2.5" rpy="0 0 0" />
     <parent link="Lower_right" />
     <child link="eef_right_link" />
     <axis xyz="0 0 0" />
@@ -173,7 +173,7 @@
 
   <link name="eef_left_link" />
   <joint name="eef_left" type="fixed">
-    <origin xyz="0 0 -1.25" rpy="0 0 0" />
+    <origin xyz="0 0 -2.5" rpy="0 0 0" />
     <parent link="Lower_left" />
     <child link="eef_left_link" />
     <axis xyz="0 0 0" />
