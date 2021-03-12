@@ -39,11 +39,15 @@ B_damping = [1 0 0;
              0 1 0;
              0 0 1]
 
+T_w_l1(q) = [cos(q) -sin(q) 0 0;
+            sin(q) cos(q) 0 0;
+            0 0 1 0;
+            0 0 0 1]
 
-T_w_c1(q) = [cos(q) -sin(q) 0 0;
-             sin(q) cos(q) 0 0;
-             0 0 1 (l_l1/2.0);
-             0 0 0 1]
+T_w_c1(q) = T_w_l1(q) * [cos(q) -sin(q) 0 0;
+                         sin(q) cos(q) 0 0;
+                         0 0 1 (l_l1/2.0);
+                         0 0 0 1]
 
 T_w_l2(q1, q2) = T_w_c1(q1) *  [cos(q2) -sin(q2) 0 0;
                                 0 0 1 0;
@@ -64,11 +68,6 @@ T_w_c3(q1, q2, q3) = T_w_l3(q1, q2, q3) * [1 0 0 0;
                                            0 1 0 -(l_l3/2.0)-0.05;
                                            0 0 1 (r_l2+r_l3);
                                            0 0 0 1]
-
-T_w_eef(q1, q2, q3) = T_w_c3(q1, q2, q3) * [1 0 0 0;
-                                            0 1 0 -(l_l3/2.0);
-                                            0 0 1 0;
-                                            0 0 0 1]
 
 
 function rot_c1(q)
@@ -105,53 +104,93 @@ end
 
 
 
-function Jacobian(q1, q2, q3)
-    c1 = T_w_c1(q1)
+function Jc1(q)
+    c1 = T_w_c1(q)
+
+    T = T_w_l1(q)
+
+    w = T[9:11]
+    v = cross(T[9:11],(c1[13:15]-T[13:15]))
+
+    return [[w; v] [0; 0; 0; 0; 0; 0] [0; 0; 0; 0; 0; 0]]
+
+end
+
+function Jc2(q1, q2)
     c2 = T_w_c2(q1,q2)
+
+    T0 = T_w_l1(q1)
+    T1 = T_w_l2(q1,q2)
+
+    w1 = T0[9:11]
+    w2 = T1[9:11]
+
+    v1 = cross(T0[9:11],(c2[13:15]-T0[13:15]))
+    v2 = cross(T1[9:11],(c2[13:15]-T1[13:15]))
+
+
+    return [[w1; v1] [w2; v2] [0; 0; 0; 0; 0; 0]]
+
+end
+
+function Jc3(q1, q2, q3)
     c3 = T_w_c3(q1,q2,q3)
 
-    eef = T_w_eef(q1,q2,q3)[13:15]
+    T0 = T_w_l1(q1)
+    T1 = T_w_l2(q1,q2)
+    T2 = T_w_l3(q1,q2,q3)
 
-    z1 = c1[9:11]
-    z2 = c2[9:11]
-    z3 = c3[9:11]
 
-    O_1 = c1[13:15]
-    O_2 = c2[13:15]
-    O_3 = c3[13:15]
+    w1 = T0[9:11]
+    w2 = T1[9:11]
+    w3 = T2[9:11]
 
-    v1 = cross(z1,(eef-O_1))
-    v2 = cross(z2,(eef-O_2))
-    v3 = cross(z3,(eef-O_3))
+    v1 = cross(T0[9:11],(c3[13:15]-T0[13:15]))
+    v2 = cross(T1[9:11],(c3[13:15]-T1[13:15]))
+    v3 = cross(T2[9:11],(c3[13:15]-T2[13:15]))
 
-    return [z1 z2 z3;
-            v1 v2 v3]
+
+    return [[w1; v1] [w2; v2] [w3; v3]]
 
 end
 
 
-function J_w(J)
+
+function Jw(J)
     return [J[1:3] J[7:9] J[13:15]]
 end
 
-function J_v(J)
+function Jv(J)
     return [J[4:6] J[10:12] J[16:18]]
 end
 
 
+
+
 function D(q)
 
-    q1 = q[1]
-    q2 = q[2]
-    q3 = q[3]
+    jc1 = Jc1(q[1])
+    jc2 = Jc2(q[1],q[2])
+    jc3 = Jc3(q[1],q[2],q[3])
 
-    J = Jacobian(q1,q2,q3)
-    j_v = J_v(J)
-    j_w = J_w(J)
 
-    D = (m1*j_v[1:3]'*j_v[1:3] + j_w[1:3]'*I_c1(q1)*j_w[1:3]) +
-        (m2*j_v[4:6]'*j_v[4:6] + j_w[4:6]'*I_c2(q1,q2)*j_w[4:6]) +
-        (m3*j_v[7:9]'*j_v[7:9] + j_w[7:9]'*I_c3(q1,q2,q3)*j_w[7:9])
+    jwc1 = Jw(jc1)
+    jvc1 = Jv(jc1)
+
+    jwc2 = Jw(jc2)
+    jvc2 = Jv(jc2)
+
+    jwc3 = Jw(jc3)
+    jvc3 = Jv(jc3)
+
+
+    Ic1 = I_c1(q[1])
+    Ic2 = I_c2(q[1],q[2])
+    Ic3 = I_c3(q[1],q[2],q[3])
+
+    D = (m1*jvc1'*jvc1 + jwc1'*Ic1*jwc1) +
+        (m2*jvc2'*jvc2 + jwc2'*Ic2*jwc2) +
+        (m3*jvc3'*jvc3 + jwc3'*Ic3*jwc3)
 
     return D
 
@@ -159,14 +198,16 @@ end
 
 
 
+function G(q)
+    return [0; -(0.55*sin(q[2])+0.6sin(q[2]+q[3])+1.05*sin(q[2]))*9.8; -0.6*sin(q[2]+q[3])*9.8]
+end
 
 function custom_inversedynamics(qd_dot, q_dot, q)
 
-    # placeholder for future torques
-    torques = [0 0 0];
+    # need to implement C(q, q_dot) function still :/
 
 
-
+    torques = D(q)*qd_dot + G(q)
 
 
 
