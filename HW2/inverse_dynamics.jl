@@ -35,9 +35,9 @@ r_l3 = 0.05
 
 
 
-B_damping = [1 0 0;
-             0 1 0;
-             0 0 1]
+B = [1 0 0;
+     0 1 0;
+     0 0 1]
 
 T_w_l1(q) = [cos(q) -sin(q) 0 0;
             sin(q) cos(q) 0 0;
@@ -65,7 +65,7 @@ T_w_l3(q1, q2, q3) = T_w_c2(q1, q2) * [cos(q3) -sin(q3) 0 0;
                                        0 0 0 1]
 
 T_w_c3(q1, q2, q3) = T_w_l3(q1, q2, q3) * [1 0 0 0;
-                                           0 1 0 -(l_l3/2.0)-0.05;
+                                           0 1 0 -(l_l3/2.0);
                                            0 0 1 (r_l2+r_l3);
                                            0 0 0 1]
 
@@ -197,19 +197,52 @@ function D(q)
 end
 
 
+function C(q, q_dot)
+
+    q1 = q[1]
+    q2 = q[2]
+    q3 = q[3]
+
+    q1_dot = q_dot[1]
+    q2_dot = q_dot[2]
+    q3_dot = q_dot[3]
+
+    # solved via Matlab Symbolic Toolbox (see find_coriolis.m)
+
+    c11 = (1161*q2_dot*sin(2*q2))/1000 + (389*q2_dot*sin(2*q2 + 2*q3))/800 + (389*q3_dot*sin(2*q2 + 2*q3))/800 - (231*q3_dot*sin(q3))/800 + (231*q2_dot*sin(2*q2 + q3))/400 + (231*q3_dot*sin(2*q2 + q3))/800
+    c12 = (1161*q1_dot*sin(2*q2))/1000 + (389*q1_dot*sin(2*q2 + 2*q3))/800 + (11*q2_dot*sin(q2 + q3))/200 + (11*q3_dot*sin(q2 + q3))/200 + (21*q2_dot*sin(q2))/200 + (231*q1_dot*sin(2*q2 + q3))/400
+    c13 = (389*q1_dot*sin(2*q2 + 2*q3))/800 + (11*q2_dot*sin(q2 + q3))/200 + (11*q3_dot*sin(q2 + q3))/200 - (231*q1_dot*sin(q3))/800 + (231*q1_dot*sin(2*q2 + q3))/800
+    c21 = -(q1_dot*(2310*sin(2*q2 + q3) + 4644*sin(2*q2) + 1945*sin(2*q2 + 2*q3)))/4000
+    c22 = -(231*q3_dot*sin(q3))/400
+    c23 = -(231*sin(q3)*(q2_dot + q3_dot))/400
+    c31 = -(q1_dot*(231*sin(2*q2 + q3) + 389*sin(2*q2 + 2*q3) - 231*sin(q3)))/800
+    c32 = (231*q2_dot*sin(q3))/400
+    c33 = 0
+
+
+    C = [c11 c12 c13;
+         c21 c22 c23;
+         c31 c32 c33]
+
+    return C
+
+end
+
+
+
 
 function G(q)
-    return [0; -(0.55*sin(q[2])+0.6sin(q[2]+q[3])+1.05*sin(q[2]))*9.8; -0.6*sin(q[2]+q[3])*9.8]
+    # i think g should be negative?
+    g = -9.8
+    return [0; -(1.6*sin(q[2])+0.55sin(q[2]+q[3]))*g; -0.55*sin(q[2]+q[3])*g]
 end
+
+
+
 
 function custom_inversedynamics(qd_dot, q_dot, q)
 
-    # need to implement C(q, q_dot) function still :/
-
-
-    torques = D(q)*qd_dot + G(q)
-
-
+    torques = D(q)*qd_dot + C(q,q_dot)*q_dot + G(q) + B*q_dot
 
     return torques
 
