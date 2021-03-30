@@ -11,5 +11,9 @@
 * contains solution for mass matrix and conservation force vector, still working on deriving the Coriolis matrix.
 * provides function custom_inversedynamics, inputs need to be column vectors.
 
+## HW3:
+* located in the HW3 folder.
+* As this homework was to be done individually, each of our members has a folder for himself.
+
 ## Paper Reviews:
 * round one paper reviews can be found in the corresponding folder, with a subfolder for each member of our group.
