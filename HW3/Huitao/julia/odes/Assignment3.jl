@@ -30,7 +30,7 @@ end
 
 function control_CTC!(τ, t, state)
     # proportion to the PD control
-    P = 1
+    P = 0.1
     kp = P*diagm([10000,10000, 10000, 10000, 10000, 10000, 10000,10000,10000])
     kd = 10*diagm([1,1,1,1,1,1,1,1,1])
     q_t,q_dt,q_ddt = traj(t)
