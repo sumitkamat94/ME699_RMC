@@ -163,13 +163,3 @@ plot_sol(p,sol,[colorant"red"],false,nothing)
 
 p
 sim_control(control_PD_TT!)
-
-#setelement!(mvis,default_frame(bodies(mechanism)[12]),0.5,"$bodies(mechanism)[11]")
-manipulate!(state) do x
-    set_configuration!(mvis, configuration(x))
-end
-
-problem = ODEProblem(Dynamics(mechanism,control!), state, (0., 10.));
-sol = solve(problem, Tsit5(),reltol=1e-8,abstol=1e-8);
-mvis = MechanismVisualizer(mechanism, URDFVisuals(urdfPath),vis)
-setanimation!(mvis, sol; realtime_rate = 1.0);
