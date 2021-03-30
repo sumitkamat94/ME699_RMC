@@ -51,11 +51,11 @@ function control_CTC!(τ, t, state)
 
     q_t, qdot_t, qddot_t = traj(t)
 
-    e_t = Kp*(configuration(state) - q_t)
-    edot_t = Kd*(velocity(state) - qdot_t)
+    e_t = -Kp*(configuration(state) - q_t)
+    edot_t = -Kd*(velocity(state) - qdot_t)
 
     # Do some CTC
-    τ .= -mass_matrix(state)*(e_t+edot_t+qddot_t) - dynamics_bias(state)
+    τ .= mass_matrix(state)*(e_t+edot_t+qddot_t) + dynamics_bias(state)
     act_sat = 50; # Actuator limits
     τ .= map( x -> x > act_sat ? act_sat : x,τ)
     τ .= map( x -> x < -act_sat ? -act_sat : x,τ)
