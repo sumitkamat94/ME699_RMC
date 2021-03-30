@@ -1,13 +1,9 @@
-include("startup.jl")
-
-
-
 q_0 = [0.01;-0.5;-0.0;-2.0;-0.3;1.5;-0.7;0.1;0.1]
 q_d = [0.0;0.0;0.0;0.0;0.0;pi;0.01;0.01;0.01]
 
 # Question 1, get the traj of q_t,q_dt,q_ddt. With cubic interpolation
 function traj(time)
-    # compute the desired joint angle at time t
+    # compute the desired joint angle at time t with cubic interpolation
     t = time/10
     q_t = q_0+3/2*(q_d-q_0)*t^2+1/2*(q_0-q_d)*t^3
     q_dt = 3*(q_d-q_0)*t+3/2*(q_0-q_d)*t^2
@@ -70,7 +66,7 @@ set_configuration!(mvis, configuration(state))
 
 
 # Define ODE Problem, which defines closed loop using  control_PD!
-problem = ODEProblem(Dynamics(mechanism,control_CTC!), state, (0., 10.));
+problem = ODEProblem(Dynamics(mechanism,control_PD!), state, (0., 10.));
 # Solve ODE problem using Tsit5 scheme, and given numerical tolerances
 sol = solve(problem, Tsit5(),reltol=1e-8,abstol=1e-8);
 # Animate solution
