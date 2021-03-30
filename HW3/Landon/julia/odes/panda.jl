@@ -4,7 +4,7 @@ sim_time = 20
 q0 = [0.01;-0.5;-0.0;-2.0;-0.3;1.5;-0.7;0.1;0.1]
 qd = [0.0;0.0;0.0;0.0;0.0;pi;0.01;0.01;0.01]
 
-
+# cubic interpolation, guarantees a smooth trajectory given q0 and qd
 function traj(t_in)
     t = t_in/motion_time
 
@@ -22,14 +22,17 @@ function traj(t_in)
 end
 
 
-
+# trajectory tracking PD controller
 function control_PD!(τ, t, state)
     if t >= motion_time
         t = motion_time
     end
 
-    Kp = diagm([10000, 20000, 10000, 20000, 10000, 10000, 10000, 10000, 10000])
-    Kd = diagm([10, 10, 10, 10, 10, 10, 10, 10, 10])
+    kp = 10000
+    kd = 1.15
+
+    Kp = diagm([kp, kp, kp, kp, kp, kp, kp, kp, kp])
+    Kd = diagm([kd, kd, kd, kd, kd, kd, kd, kd, kd])
 
     q_t, qdot_t, qddot_t = traj(t)
 
@@ -41,13 +44,17 @@ function control_PD!(τ, t, state)
 end
 
 
+# controlled torque controller - PD feedback
 function control_CTC!(τ, t, state)
     if t >= motion_time
         t = motion_time
     end
 
-    Kp = diagm([5000, 5000, 5000, 5000, 5000, 5000, 5000, 5000, 5000])
-    Kd = diagm([5, 5, 5, 5, 5, 5, 5, 5, 5])
+    kp = 10000
+    kd = 1.15
+
+    Kp = diagm([kp, kp, kp, kp, kp, kp, kp, kp, kp])
+    Kd = diagm([kd, kd, kd, kd, kd, kd, kd, kd, kd])
 
     q_t, qdot_t, qddot_t = traj(t)
 
@@ -74,7 +81,7 @@ function plot_sol(p,sol,colorarg,saveflag,savename)
     end
 end
 
-
+# test function for control methods
 function do_control(control_func)
     # Refresh visualization
     delete!(vis)
@@ -89,7 +96,7 @@ function do_control(control_func)
     set_configuration!(mvis, configuration(state))
 
     # Define ODE Problem, which defines closed loop using  control!
-    problem = ODEProblem(Dynamics(mechanism,control_func), state, (0., sim_time));
+    problem = ODEProblem(Dynamics(mechanism,control_func), state, (0., motion_time));
     # Solve ODE problem using Tsit5 scheme, and given numerical tolerances
     sol = solve(problem, Tsit5(),reltol=1e-8,abstol=1e-8);
     # Animate solution
@@ -112,5 +119,5 @@ end
 
 
 do_control(control_PD!)
-sleep(sim_time)
+sleep(motion_time)
 do_control(control_CTC!)
